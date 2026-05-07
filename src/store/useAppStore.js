@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '../lib/supabase';
 
 const useAppStore = create(
   persist(
@@ -7,8 +8,17 @@ const useAppStore = create(
       scans: [],
       points: 0,
       redemptions: [],
+      user: null,
+      session: null,
 
-      addScan: (scanData) => set((state) => {
+      setUser: (user, session) => set({ user, session }),
+      logout: async () => {
+        await supabase.auth.signOut();
+        set({ user: null, session: null, scans: [], points: 0, redemptions: [] }); // Bersihkan data lokal saat logout
+      },
+
+      addScan: async (scanData) => {
+        const state = get();
         const newScan = {
           id: Date.now(),
           timestamp: new Date().toISOString(),
@@ -17,16 +27,35 @@ const useAppStore = create(
           confidence: scanData.confidence,
           points: scanData.points,
           fact: scanData.fact,
-          imageUrl: scanData.imageUrl || null, // Opsional: jika ingin menyimpan gambar base64
+          imageUrl: scanData.imageUrl || null,
         };
         
-        return {
+        set((state) => ({
           scans: [newScan, ...state.scans],
           points: state.points + (scanData.points || 0),
-        };
-      }),
+        }));
 
-      addRedemption: (rewardName, pointsCost) => {
+        // Sinkronisasi background ke Supabase jika login
+        if (state.user) {
+          supabase.from('scans').insert({
+            user_id: state.user.id,
+            label: newScan.label,
+            category: newScan.category,
+            confidence: newScan.confidence,
+            points_earned: newScan.points,
+            fact: newScan.fact,
+          }).then(() => {
+            // Update poin profil
+            supabase.from('profiles').select('total_points').eq('id', state.user.id).single().then(({ data }) => {
+              if (data) {
+                supabase.from('profiles').update({ total_points: data.total_points + newScan.points }).eq('id', state.user.id).then();
+              }
+            });
+          }).catch(console.error);
+        }
+      },
+
+      addRedemption: async (rewardName, pointsCost) => {
         const state = get();
         if (state.points >= pointsCost) {
           const newRedemption = {
@@ -39,6 +68,22 @@ const useAppStore = create(
             redemptions: [newRedemption, ...state.redemptions],
             points: state.points - pointsCost,
           }));
+
+          // Sinkronisasi background ke Supabase
+          if (state.user) {
+            supabase.from('redemptions').insert({
+              user_id: state.user.id,
+              reward_name: rewardName,
+              points_spent: pointsCost,
+              status: 'success'
+            }).then(() => {
+              supabase.from('profiles').select('total_points').eq('id', state.user.id).single().then(({ data }) => {
+                if (data) {
+                  supabase.from('profiles').update({ total_points: data.total_points - pointsCost }).eq('id', state.user.id).then();
+                }
+              });
+            }).catch(console.error);
+          }
           return true;
         }
         return false;

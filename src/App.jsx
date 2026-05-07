@@ -5,7 +5,18 @@ import BerandaPage from './pages/BerandaPage';
 import ScanPage from './pages/ScanPage';
 import AktifitasPage from './pages/AktifitasPage';
 import DompetPage from './pages/DompetPage';
+import AuthPage from './pages/AuthPage';
+import ProfilePage from './pages/ProfilePage';
 import { Toaster } from './components/ui/sonner';
+import useAppStore from './store/useAppStore';
+
+function ProtectedRoute({ children }) {
+  const session = useAppStore(state => state.session);
+  if (!session) {
+    return <Navigate to="/auth" replace />;
+  }
+  return children;
+}
 
 function App() {
   return (
@@ -13,11 +24,20 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route element={<AppLayout />}>
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/beranda" element={<BerandaPage />} />
           <Route path="/scan" element={<ScanPage />} />
           <Route path="/aktifitas" element={<AktifitasPage />} />
-          <Route path="/dompet" element={<DompetPage />} />
-          <Route path="/profil" element={<div className="p-4 text-center mt-20">Fitur Profil akan datang</div>} />
+          <Route path="/dompet" element={
+            <ProtectedRoute>
+              <DompetPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/profil" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
