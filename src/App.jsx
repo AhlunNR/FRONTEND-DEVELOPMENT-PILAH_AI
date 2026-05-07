@@ -27,7 +27,11 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/beranda" element={<BerandaPage />} />
           <Route path="/scan" element={<ScanPage />} />
-          <Route path="/aktifitas" element={<AktifitasPage />} />
+          <Route path="/aktifitas" element={
+            <ProtectedRoute>
+              <AktifitasPage />
+            </ProtectedRoute>
+          } />
           <Route path="/dompet" element={
             <ProtectedRoute>
               <DompetPage />
