@@ -44,6 +44,7 @@ export default function ScanPage() {
   useEffect(() => {
     if (stream && videoRef.current) {
       videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => console.error("Video play error:", e));
     }
   }, [stream]);
 
@@ -140,6 +141,7 @@ export default function ScanPage() {
                   ref={videoRef} 
                   autoPlay 
                   playsInline 
+                  muted
                   className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${stream ? 'opacity-100' : 'opacity-0'}`}
                 />
                 
