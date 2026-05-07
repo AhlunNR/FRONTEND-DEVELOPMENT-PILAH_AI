@@ -177,7 +177,8 @@ export default function ScanPage() {
                     e.target.muted = true;
                     e.target.play().catch(console.error);
                   }}
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${stream ? 'opacity-100' : 'opacity-0'}`}
+                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                  style={{ opacity: stream ? 1 : 0 }}
                 />
                 
                 {!stream && (
