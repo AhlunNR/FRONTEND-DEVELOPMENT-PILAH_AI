@@ -16,8 +16,8 @@ export default function AktifitasPage() {
   const scans = useAppStore(state => state.scans);
 
   return (
-    <div className="p-4 bg-slate-50 min-h-screen pb-24">
-      <h1 className="text-2xl font-bold text-slate-900 mt-4 mb-2">Riwayat Aktivitas</h1>
+    <div className="p-4 md:p-8 bg-slate-50 min-h-screen pb-24 md:pb-8">
+      <h1 className="text-2xl font-bold text-slate-900 mt-4 md:mt-0 mb-2">Riwayat Aktivitas</h1>
       <p className="text-slate-500 text-sm mb-6">Jejak kontribusi daur ulangmu</p>
 
       {scans.length === 0 ? (

@@ -29,8 +29,8 @@ export default function DompetPage() {
   };
 
   return (
-    <div className="p-4 bg-slate-50 min-h-screen pb-24">
-      <div className="bg-gradient-to-br from-emerald-500 to-primary rounded-3xl p-6 text-white shadow-xl shadow-primary/20 mb-8 mt-2 relative overflow-hidden">
+    <div className="p-4 md:p-8 bg-slate-50 min-h-screen pb-24 md:pb-8">
+      <div className="bg-gradient-to-br from-emerald-500 to-primary rounded-3xl p-6 md:p-10 text-white shadow-xl shadow-primary/20 mb-8 mt-2 md:mt-0 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
         <h2 className="text-emerald-50 font-medium mb-1">Saldo Poin Kamu</h2>
         <div className="flex items-end gap-2">
@@ -48,7 +48,7 @@ export default function DompetPage() {
         <Gift className="text-primary" /> Katalog Penukaran
       </h3>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {rewards.map((reward) => (
           <Card key={reward.id} className="border-none shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4 flex flex-col h-full">

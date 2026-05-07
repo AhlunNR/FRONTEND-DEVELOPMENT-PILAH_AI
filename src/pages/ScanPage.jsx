@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Image as ImageIcon, RotateCcw, Check, Loader2, Leaf, Award, ScanLine } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -25,9 +25,6 @@ export default function ScanPage() {
         video: { facingMode: 'environment' } 
       });
       setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
     } catch (err) {
       console.error("Camera error:", err);
       toast.error('Gagal mengakses kamera', {
@@ -43,8 +40,15 @@ export default function ScanPage() {
     }
   }, [stream]);
 
+  // Binding stream ke element video setelah dirender
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
   // Clean up ketika unmount
-  useState(() => {
+  useEffect(() => {
     return () => stopCamera();
   }, [stopCamera]);
 
@@ -122,148 +126,159 @@ export default function ScanPage() {
   };
 
   return (
-    <div className="p-4 flex flex-col min-h-screen pb-24">
-      <h1 className="text-2xl font-bold text-slate-900 mt-4 mb-6">Pemindai Sampah</h1>
+    <div className="p-4 md:p-8 flex flex-col min-h-[calc(100vh-4rem)] pb-24 md:pb-8">
+      <h1 className="text-2xl font-bold text-slate-900 mt-4 md:mt-0 mb-6">Pemindai Sampah</h1>
 
-      {!result && (
-        <Card className="overflow-hidden mb-6 flex-1 flex flex-col border-none shadow-md bg-slate-50">
-          {!capturedImage ? (
-            <div className="relative flex-1 bg-black min-h-[350px] rounded-t-xl overflow-hidden flex flex-col items-center justify-center">
-              {stream ? (
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+      <div className="flex flex-col md:flex-row gap-6 flex-1">
+        {/* Kolom Kiri: Kamera / Preview */}
+        <div className={`w-full ${result ? 'md:w-1/2' : 'md:max-w-2xl md:mx-auto'} transition-all duration-500`}>
+          <Card className="overflow-hidden flex-1 flex flex-col border-none shadow-md bg-slate-50 h-[55vh] md:h-[65vh]">
+            {!capturedImage ? (
+              <div className="relative flex-1 bg-black rounded-t-xl overflow-hidden flex flex-col items-center justify-center">
+                {stream ? (
+                  <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline 
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-center p-6 flex flex-col items-center">
+                    <Camera size={48} className="text-slate-500 mb-4" />
+                    <p className="text-slate-400 text-sm mb-4">Kamera belum aktif</p>
+                    <Button onClick={startCamera} variant="secondary">
+                      Aktifkan Kamera
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Camera Overlay Grid */}
+                {stream && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="w-full h-full border-[1.5px] border-white/20 border-dashed grid grid-cols-3 grid-rows-3">
+                      <div className="border-r-[1.5px] border-b-[1.5px] border-white/20 border-dashed"></div>
+                      <div className="border-r-[1.5px] border-b-[1.5px] border-white/20 border-dashed"></div>
+                      <div className="border-b-[1.5px] border-white/20 border-dashed"></div>
+                      <div className="border-r-[1.5px] border-b-[1.5px] border-white/20 border-dashed"></div>
+                      <div className="border-r-[1.5px] border-b-[1.5px] border-white/20 border-dashed flex items-center justify-center">
+                        <div className="w-16 h-16 border-2 border-primary rounded-lg"></div>
+                      </div>
+                      <div className="border-b-[1.5px] border-white/20 border-dashed"></div>
+                      <div className="border-r-[1.5px] border-white/20 border-dashed"></div>
+                      <div className="border-r-[1.5px] border-white/20 border-dashed"></div>
+                      <div></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="relative flex-1 bg-black rounded-t-xl overflow-hidden flex items-center justify-center">
+                <img src={capturedImage} alt="Captured" className="w-full h-full object-contain" />
+              </div>
+            )}
+
+            <CardContent className="p-4 bg-white shrink-0">
+              {!capturedImage ? (
+                <div className="flex justify-around items-center">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="w-12 h-12 rounded-full"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImageIcon size={20} className="text-slate-600" />
+                  </Button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                    accept="image/*" 
+                    className="hidden" 
+                  />
+                  
+                  <Button 
+                    size="icon" 
+                    className="w-16 h-16 rounded-full shadow-lg border-4 border-white ring-2 ring-primary bg-primary hover:bg-primary/90"
+                    onClick={capturePhoto}
+                    disabled={!stream}
+                  >
+                    <div className="w-12 h-12 rounded-full border-2 border-white"></div>
+                  </Button>
+                  
+                  <div className="w-12 h-12"></div> {/* Spacer to balance */}
+                </div>
               ) : (
-                <div className="text-center p-6 flex flex-col items-center">
-                  <Camera size={48} className="text-slate-500 mb-4" />
-                  <p className="text-slate-400 text-sm mb-4">Kamera belum aktif</p>
-                  <Button onClick={startCamera} variant="secondary">
-                    Aktifkan Kamera
+                <div className="flex justify-between items-center gap-4">
+                  <Button variant="outline" className="flex-1" onClick={resetScan}>
+                    <RotateCcw className="mr-2" size={16} /> Ulangi
+                  </Button>
+                  <Button className="flex-1" onClick={analyzeImage} disabled={isAnalyzing}>
+                    {isAnalyzing ? (
+                      <><Loader2 className="mr-2 animate-spin" size={16} /> Analisis...</>
+                    ) : (
+                      <><Check className="mr-2" size={16} /> Gunakan</>
+                    )}
                   </Button>
                 </div>
               )}
-              
-              {/* Camera Overlay Grid */}
-              {stream && (
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="w-full h-full border-[1.5px] border-white/20 border-dashed grid grid-cols-3 grid-rows-3">
-                    <div className="border-r-[1.5px] border-b-[1.5px] border-white/20 border-dashed"></div>
-                    <div className="border-r-[1.5px] border-b-[1.5px] border-white/20 border-dashed"></div>
-                    <div className="border-b-[1.5px] border-white/20 border-dashed"></div>
-                    <div className="border-r-[1.5px] border-b-[1.5px] border-white/20 border-dashed"></div>
-                    <div className="border-r-[1.5px] border-b-[1.5px] border-white/20 border-dashed flex items-center justify-center">
-                      <div className="w-16 h-16 border-2 border-primary rounded-lg"></div>
-                    </div>
-                    <div className="border-b-[1.5px] border-white/20 border-dashed"></div>
-                    <div className="border-r-[1.5px] border-white/20 border-dashed"></div>
-                    <div className="border-r-[1.5px] border-white/20 border-dashed"></div>
-                    <div></div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="relative flex-1 bg-black min-h-[350px] rounded-t-xl overflow-hidden flex items-center justify-center">
-              <img src={capturedImage} alt="Captured" className="w-full h-full object-contain" />
-            </div>
-          )}
-
-          <CardContent className="p-4 bg-white">
-            {!capturedImage ? (
-              <div className="flex justify-around items-center">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="w-12 h-12 rounded-full"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <ImageIcon size={20} className="text-slate-600" />
-                </Button>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileUpload} 
-                  accept="image/*" 
-                  className="hidden" 
-                />
-                
-                <Button 
-                  size="icon" 
-                  className="w-16 h-16 rounded-full shadow-lg border-4 border-white ring-2 ring-primary bg-primary hover:bg-primary/90"
-                  onClick={capturePhoto}
-                  disabled={!stream}
-                >
-                  <div className="w-12 h-12 rounded-full border-2 border-white"></div>
-                </Button>
-                
-                <div className="w-12 h-12"></div> {/* Spacer to balance */}
-              </div>
-            ) : (
-              <div className="flex justify-between items-center gap-4">
-                <Button variant="outline" className="flex-1" onClick={resetScan}>
-                  <RotateCcw className="mr-2" size={16} /> Ulangi
-                </Button>
-                <Button className="flex-1" onClick={analyzeImage} disabled={isAnalyzing}>
-                  {isAnalyzing ? (
-                    <><Loader2 className="mr-2 animate-spin" size={16} /> Analisis...</>
-                  ) : (
-                    <><Check className="mr-2" size={16} /> Gunakan</>
-                  )}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* HASIL ANALISIS */}
-      {result && (
-        <div className="animate-in slide-in-from-bottom-4 duration-500 fade-in">
-          <Card className="border-none shadow-lg overflow-hidden border-t-4" style={{ borderTopColor: result.color }}>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Terdeteksi</p>
-                  <h2 className="text-2xl font-bold text-slate-900 capitalize">{result.label}</h2>
-                  <p className="text-sm font-medium mt-1" style={{ color: result.color }}>{result.category}</p>
-                </div>
-                <div className="bg-slate-100 px-3 py-1.5 rounded-full text-xs font-bold text-slate-700">
-                  {result.confidence}% Akurat
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase mb-2">Instruksi Pembuangan</h3>
-                  <p className="text-slate-800 font-medium">{result.disposal}</p>
-                  <p className="text-slate-600 text-sm mt-2 leading-relaxed">{result.tips}</p>
-                </div>
-                
-                <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
-                  <h3 className="text-xs font-bold text-primary uppercase mb-2 flex items-center">
-                    <Leaf size={14} className="mr-1" /> Fakta Edukatif
-                  </h3>
-                  <p className="text-slate-700 text-sm leading-relaxed">{result.fact}</p>
-                </div>
-                
-                <div className="flex items-center justify-between bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-                  <div className="flex items-center text-yellow-700 font-medium">
-                    <Award className="mr-2" /> Poin Didapat
-                  </div>
-                  <div className="text-xl font-bold text-yellow-600">+{result.points}</div>
-                </div>
-              </div>
-
-              <Button className="w-full mt-6" onClick={resetScan}>
-                <ScanLine className="mr-2" size={16} /> Scan Gambar Lain
-              </Button>
             </CardContent>
           </Card>
         </div>
-      )}
+
+        {/* Kolom Kanan: Hasil Analisis */}
+        {result ? (
+          <div className="w-full md:w-1/2 animate-in slide-in-from-bottom-4 duration-500 fade-in flex flex-col h-full">
+            <Card className="border-none shadow-lg overflow-hidden border-t-4 flex-1 flex flex-col" style={{ borderTopColor: result.color }}>
+              <CardContent className="p-6 md:p-8 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Terdeteksi</p>
+                      <h2 className="text-2xl md:text-3xl font-bold text-slate-900 capitalize">{result.label}</h2>
+                      <p className="text-sm md:text-base font-medium mt-1" style={{ color: result.color }}>{result.category}</p>
+                    </div>
+                    <div className="bg-slate-100 px-3 py-1.5 rounded-full text-xs font-bold text-slate-700">
+                      {result.confidence}% Akurat
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 p-4 md:p-5 rounded-xl border border-slate-100">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase mb-2">Instruksi Pembuangan</h3>
+                      <p className="text-slate-800 font-medium md:text-lg">{result.disposal}</p>
+                      <p className="text-slate-600 text-sm md:text-base mt-2 leading-relaxed">{result.tips}</p>
+                    </div>
+                    
+                    <div className="bg-primary/5 p-4 md:p-5 rounded-xl border border-primary/10">
+                      <h3 className="text-xs font-bold text-primary uppercase mb-2 flex items-center">
+                        <Leaf size={14} className="mr-1" /> Fakta Edukatif
+                      </h3>
+                      <p className="text-slate-700 text-sm md:text-base leading-relaxed">{result.fact}</p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between bg-yellow-50 p-4 md:p-5 rounded-xl border border-yellow-100">
+                      <div className="flex items-center text-yellow-700 font-medium md:text-lg">
+                        <Award className="mr-2" /> Poin Didapat
+                      </div>
+                      <div className="text-xl md:text-2xl font-bold text-yellow-600">+{result.points}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <Button className="w-full mt-6 h-12" onClick={resetScan}>
+                  <ScanLine className="mr-2" size={18} /> Scan Gambar Lain
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-center p-8 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+            <ScanLine size={64} className="text-slate-300 mb-6" />
+            <h3 className="text-xl font-bold text-slate-700 mb-2">Siap Menganalisis</h3>
+            <p className="text-slate-500 max-w-sm">Arahkan kamera ke sampah atau unggah gambar untuk melihat hasil deteksi AI secara langsung di sini.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
