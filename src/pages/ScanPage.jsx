@@ -22,9 +22,14 @@ export default function ScanPage() {
     try {
       if (stream) return; // Sudah aktif
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { facingMode: { ideal: 'environment' } } 
       });
       setStream(mediaStream);
+      // Double protection: ikat stream secara langsung saat elemen sudah di DOM
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        videoRef.current.play().catch(e => console.error("Direct play error:", e));
+      }
     } catch (err) {
       console.error("Camera error:", err);
       toast.error('Gagal mengakses kamera', {
@@ -42,9 +47,9 @@ export default function ScanPage() {
 
   // Binding stream ke element video setelah dirender
   useEffect(() => {
-    if (stream && videoRef.current) {
+    if (stream && videoRef.current && videoRef.current.srcObject !== stream) {
       videoRef.current.srcObject = stream;
-      videoRef.current.play().catch(e => console.error("Video play error:", e));
+      videoRef.current.play().catch(e => console.error("Effect play error:", e));
     }
   }, [stream]);
 
@@ -55,6 +60,10 @@ export default function ScanPage() {
 
   const capturePhoto = () => {
     if (videoRef.current) {
+      if (!videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+        toast.error('Kamera sedang memuat', { description: 'Mohon tunggu beberapa detik hingga gambar muncul.' });
+        return;
+      }
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
@@ -142,6 +151,7 @@ export default function ScanPage() {
                   autoPlay 
                   playsInline 
                   muted
+                  onLoadedMetadata={(e) => e.target.play().catch(console.error)}
                   className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${stream ? 'opacity-100' : 'opacity-0'}`}
                 />
                 
