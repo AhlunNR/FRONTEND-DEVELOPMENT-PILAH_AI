@@ -7,7 +7,7 @@ export default function BottomNav() {
     { icon: History, label: 'Aktivitas', path: '/aktifitas' },
     { icon: ScanLine, label: 'Scan', path: '/scan', isMain: true },
     { icon: Wallet, label: 'Dompet', path: '/dompet' },
-    { icon: User, label: 'Saya', path: '/profil' }, // Profil bisa jadi dummy untuk sekarang
+    { icon: User, label: 'Saya', path: '/profil' }, // Link to user profile
   ];
 
   return (

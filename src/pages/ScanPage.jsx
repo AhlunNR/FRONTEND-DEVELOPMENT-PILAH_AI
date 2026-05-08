@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import useAppStore from '../store/useAppStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; // Sesuaikan jika deploy di production
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; // Adjust if deployed to production
 
 export default function ScanPage() {
   const [stream, setStream] = useState(null);
@@ -20,12 +20,12 @@ export default function ScanPage() {
 
   const startCamera = async () => {
     try {
-      if (stream) return; // Sudah aktif
+      if (stream) return; // Already active
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: { ideal: 'environment' } } 
       });
       setStream(mediaStream);
-      // Double protection: ikat stream secara langsung saat elemen sudah di DOM
+      // Double protection: bind stream directly when element is in DOM
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         videoRef.current.muted = true;
@@ -47,7 +47,7 @@ export default function ScanPage() {
     }
   }, [stream]);
 
-  // Binding stream ke element video setelah dirender
+  // Bind stream to video element after render
   useEffect(() => {
     if (stream && videoRef.current && videoRef.current.srcObject !== stream) {
       videoRef.current.srcObject = stream;
@@ -57,7 +57,7 @@ export default function ScanPage() {
     }
   }, [stream]);
 
-  // Clean up ketika unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => stopCamera();
   }, [stopCamera]);
@@ -72,7 +72,7 @@ export default function ScanPage() {
         return;
       }
 
-      // Batasi ukuran maksimal untuk menghindari crash canvas atau memory limit di browser mobile
+      // Limit maximum size to avoid canvas crash or memory limits on mobile browsers
       const MAX_DIMENSION = 1280;
       if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
         const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
@@ -85,7 +85,7 @@ export default function ScanPage() {
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       
-      // Pastikan background hitam jika frame gagal render
+      // Ensure black background if frame fails to render
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(videoRef.current, 0, 0, width, height);
@@ -113,7 +113,7 @@ export default function ScanPage() {
     
     setIsAnalyzing(true);
     try {
-      // Konversi base64 ke blob untuk dikirim sebagai file
+      // Convert base64 to blob to send as a file
       const res = await fetch(capturedImage);
       const blob = await res.blob();
       const formData = new FormData();
@@ -127,7 +127,7 @@ export default function ScanPage() {
       if (data.status === 'success') {
         setResult(data.prediction);
         
-        // Simpan ke state global (Zustand)
+        // Save to global state (Zustand)
         addScan({
           label: data.prediction.label,
           category: data.prediction.category,

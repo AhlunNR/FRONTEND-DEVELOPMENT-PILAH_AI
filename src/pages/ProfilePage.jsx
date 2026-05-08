@@ -22,7 +22,7 @@ export default function ProfilePage() {
     navigate('/auth');
   };
 
-  if (!user) return null; // Akan ditangani oleh ProtectedRoute
+  if (!user) return null; // Handled by ProtectedRoute
 
   const fullName = user.user_metadata?.full_name || 'Pengguna EcoScan';
   const avatarUrl = user.user_metadata?.avatar_url;
@@ -32,7 +32,7 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold text-slate-900 mt-4 md:mt-0 mb-6">Profil Saya</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Kartu Info Profil */}
+        {/* Profile Information Card */}
         <Card className="col-span-1 md:col-span-1 border-none shadow-md">
           <CardContent className="p-6 flex flex-col items-center text-center">
             <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 overflow-hidden border-4 border-white shadow-lg">
@@ -63,7 +63,7 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Kartu Statistik */}
+        {/* Statistics Card */}
         <div className="col-span-1 md:col-span-2 space-y-6">
           <Card className="border-none shadow-md bg-gradient-to-br from-primary to-green-600 text-white overflow-hidden relative">
             <div className="absolute right-0 top-0 opacity-10">

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/LandingPage';
@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage';
 import { Toaster } from './components/ui/sonner';
 import useAppStore from './store/useAppStore';
 import { supabase } from './lib/supabase';
+import { Loader2 } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
   const session = useAppStore(state => state.session);
@@ -22,14 +23,16 @@ function ProtectedRoute({ children }) {
 
 function App() {
   const setUser = useAppStore(state => state.setUser);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Periksa sesi saat pertama dimuat
+    // Initialize session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setUser(session.user, session);
+      setIsInitialized(true);
     });
 
-    // Dengarkan perubahan status login (sangat penting untuk OAuth Google)
+    // Listen to authentication state changes (required for OAuth redirects)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setUser(session.user, session);
@@ -40,6 +43,14 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, [setUser]);
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>

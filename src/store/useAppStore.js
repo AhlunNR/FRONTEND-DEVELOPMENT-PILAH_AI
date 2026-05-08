@@ -14,7 +14,7 @@ const useAppStore = create(
       setUser: (user, session) => set({ user, session }),
       logout: async () => {
         await supabase.auth.signOut();
-        set({ user: null, session: null, scans: [], points: 0, redemptions: [] }); // Bersihkan data lokal saat logout
+        set({ user: null, session: null, scans: [], points: 0, redemptions: [] }); // Clear local data on logout
       },
 
       addScan: async (scanData) => {
@@ -35,7 +35,7 @@ const useAppStore = create(
           points: state.points + (scanData.points || 0),
         }));
 
-        // Sinkronisasi background ke Supabase jika login
+        // Background sync to Supabase if logged in
         if (state.user) {
           supabase.from('scans').insert({
             user_id: state.user.id,
@@ -45,7 +45,7 @@ const useAppStore = create(
             points_earned: newScan.points,
             fact: newScan.fact,
           }).then(() => {
-            // Update poin profil
+            // Update profile points
             supabase.from('profiles').select('total_points').eq('id', state.user.id).single().then(({ data }) => {
               if (data) {
                 supabase.from('profiles').update({ total_points: data.total_points + newScan.points }).eq('id', state.user.id).then();
@@ -69,7 +69,7 @@ const useAppStore = create(
             points: state.points - pointsCost,
           }));
 
-          // Sinkronisasi background ke Supabase
+          // Background sync to Supabase
           if (state.user) {
             supabase.from('redemptions').insert({
               user_id: state.user.id,
@@ -97,18 +97,18 @@ const useAppStore = create(
         const totalPoints = state.points;
         const totalRedeemed = state.redemptions.reduce((sum, r) => sum + r.points, 0);
         
-        // Asumsi kasar: 0.5kg CO2 per scan daur ulang
+        // Rough assumption: 0.5kg CO2 saved per recycled scan
         const co2Saved = (totalScans * 0.5).toFixed(1);
         
-        // Item yang didaur ulang (selain trash/residu)
+        // Recycled items (excluding trash/residue)
         const recycledItems = state.scans.filter(s => s.label !== 'trash').length;
         
-        // Filter mingguan
+        // Weekly filter
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const weekScans = state.scans.filter(s => new Date(s.timestamp) >= weekAgo);
         const weeklyPoints = weekScans.reduce((sum, s) => sum + s.points, 0);
         
-        // Filter bulanan
+        // Monthly filter
         const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const monthScans = state.scans.filter(s => new Date(s.timestamp) >= monthAgo);
         const monthlyPoints = monthScans.reduce((sum, s) => sum + s.points, 0);

@@ -20,7 +20,7 @@ export default function AuthPage() {
   const session = useAppStore(state => state.session);
   const setUser = useAppStore(state => state.setUser);
 
-  // Jika sudah login, langsung ke profil
+  // Redirect to profile if already logged in
   if (session) {
     return <Navigate to="/profil" replace />;
   }
@@ -36,7 +36,7 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        // Mode Login
+        // Login Mode
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -48,7 +48,7 @@ export default function AuthPage() {
         toast.success('Berhasil masuk!');
         navigate('/profil');
       } else {
-        // Mode Register
+        // Registration Mode
         if (!fullName) {
           toast.error('Harap isi nama lengkap');
           setIsLoading(false);
@@ -67,14 +67,14 @@ export default function AuthPage() {
 
         if (error) throw error;
         
-        // Supabase biasanya mengirimkan email konfirmasi. Jika tidak (auto-confirm on), user akan langsung login.
+        // Supabase usually sends a confirmation email. If auto-confirm is on, the user will be logged in immediately.
         if (data.session) {
           setUser(data.user, data.session);
           toast.success('Pendaftaran berhasil!');
           navigate('/profil');
         } else {
           toast.success('Pendaftaran berhasil! Silakan cek email Anda untuk verifikasi.');
-          setIsLogin(true); // Kembali ke mode login
+          setIsLogin(true); // Return to login mode
         }
       }
     } catch (error) {
