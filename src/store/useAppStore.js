@@ -11,7 +11,51 @@ const useAppStore = create(
       user: null,
       session: null,
 
-      setUser: (user, session) => set({ user, session }),
+      setUser: (user, session) => {
+        set({ user, session });
+        if (user) {
+          get().fetchUserData(user.id);
+        }
+      },
+      
+      fetchUserData: async (userId) => {
+        try {
+          // Fetch profile points
+          const { data: profile } = await supabase.from('profiles').select('total_points').eq('id', userId).single();
+          
+          // Fetch scans
+          const { data: scans } = await supabase.from('scans').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+          
+          // Fetch redemptions
+          const { data: redemptions } = await supabase.from('redemptions').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+          
+          const formattedScans = scans ? scans.map(s => ({
+            id: s.id,
+            timestamp: s.created_at,
+            label: s.label,
+            category: s.category,
+            confidence: s.confidence,
+            points: s.points_earned,
+            fact: s.fact,
+            imageUrl: s.image_url || null
+          })) : [];
+
+          const formattedRedemptions = redemptions ? redemptions.map(r => ({
+            id: r.id,
+            timestamp: r.created_at,
+            reward: r.reward_name,
+            points: r.points_spent
+          })) : [];
+
+          set({
+            points: profile?.total_points || 0,
+            scans: formattedScans,
+            redemptions: formattedRedemptions
+          });
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      },
       logout: async () => {
         await supabase.auth.signOut();
         set({ user: null, session: null, scans: [], points: 0, redemptions: [] }); // Clear local data on logout
